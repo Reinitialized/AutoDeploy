@@ -1,5 +1,10 @@
 Start-Transcript -Append "C:\AutoDeploy\Logs\Install.log"
 
+$USBDrive = Get-WmiObject Win32_LogicalDisk -Filter "DriveType = 2" | Where-Object { $_.VolumeName -eq "AutoDeployUSB" }
+if (-Not $USBDrive) {
+    Throw "Cannot continue: Unable to locate AutoDeploy USB, a required dependency. Please try again."
+}
+
 Write-Output "Checking for Internet access"
 if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)) {
     Write-Output "Internet access not available, checking for Ethernet drivers"
@@ -8,11 +13,7 @@ if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)
 	}
     
     Write-Output "Attempting to install drivers"
-    $USBDrive = Get-WmiObject Win32_LogicalDisk -Filter "DriveType = 2" | Where-Object { $_.VolumeName -eq "AutoDeployUSB" }
-    if (-Not $USBDrive) {
-        Throw "Cannot continue: Unable to locate AutoDeploy USB, a required dependency. Please try again."
-    }
-    Start-Process -NoNewWindow -Wait "$($USBDrive.DeviceId)\AutoDeploy\Applications\SnappyDriver\SDIO.exe" -ArgumentList "-nogui -license -nologfile -nosnapshot -autoinstall -autoclose"
+    Start-Process -NoNewWindow -Wait "C:\AutoDeploy\Applications\SnappyDriver\SDIO.exe" -ArgumentList "-nogui -license -nologfile -nosnapshot -autoinstall -autoclose"
 
     Write-Output "Sleeping for 15 seconds to let drivers settle"
     Start-Sleep 15
@@ -27,6 +28,8 @@ if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)
         }
     }
 }
+
+Copy-Item -Path "$($USBDrive.DeviceId)\AutoDeploy\Applications" -Destination "C:\AutoDeploy\Applications" -Recurse -Confirm:$false
 
 Write-Output "Downloading Setup.ps1"
 Invoke-WebRequest "https://raw.githubusercontent.com/Reinitialized/AutoDeploy/indev/Setup.ps1" -OutFile C:\AutoDeploy\Setup.ps1
