@@ -318,7 +318,14 @@ $regkey = "HKLM:SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces"
 Get-ChildItem $regkey | ForEach-Object { Set-ItemProperty -Path "$regkey\$($_.pschildname)" -Name NetbiosOptions -Value 2 -Verbose}
 
 Write-Output "Securing SMB"
-Set-SmbServerConfiguration -EnableAuthenticateUserSharing $True -RequireSecuritySignature $True -EnableSecuritySignature $True -EncryptData $True
+$SMBParameters = @{
+    EnableAuthenticateUserSharing = $True
+    RequireSecuritySignature = $True
+    EnableSecuritySignature = $True
+    EncryptData = $True
+    Confirm = $false
+}
+Set-SmbServerConfiguration @SMBParameters
 
 Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "$($USBDrive.DeviceId)\AutoDeploy\BitLocker\" -RecoveryKeyProtector
@@ -526,5 +533,5 @@ cleanmgr.exe /sagerun:1 /verylowdisk
 Write-Output "Creating Restore Point Checkpoint"
 Checkpoint-Computer -Description "AutoDeploy" -RestorePointType "MODIFY_SETTINGS"
 
-Write-Output "Setup Complete, rebooting"
-Restart-Computer -Force
+Write-Output "[DONE] Setup Complete, rebooting"
+Restart-Computer -Force -Confirm:$false
