@@ -1,4 +1,4 @@
-Start-Transaction -Append "C:\AutoDeploy\Logs\Setup.log"
+Start-Transcript -Append "C:\AutoDeploy\Logs\Setup.log"
 Write-Output "AutoDeploy started. Waiting 60 seconds to let Windows settle"
 Start-Sleep -Seconds 60
 
