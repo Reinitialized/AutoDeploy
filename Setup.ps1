@@ -324,7 +324,52 @@ Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "$($USBDrive.DeviceId)\AutoDeploy\BitLocker\" -RecoveryKeyProtector
 
 Write-Output "[4/x] Bloatware"
-$WhitelistedUWPApps = @("MicrosoftWindows.Client.WebExperience", "Microsoft.WindowsStore", "Microsoft.WindowsNotepad", "Microsoft.WindowsCalculator", "Microsoft.WebpImageExtension", "Microsoft.VP9VideoExtensions", "Microsoft.StorePurchaseApp", "Microsoft.SecHealthUI", "Microsoft.ScreenSketch", "Microsoft.HEIFImageExtension", "Microsoft.AV1VideoExtension")
+$WhitelistedUWPApps = @(
+    "MicrosoftWindows.Client.WebExperience", 
+    "Microsoft.WindowsStore",
+    "Microsoft.StorePurchaseApp",
+    "Microsoft.WindowsNotepad", 
+    "Microsoft.WindowsCalculator", 
+    "Microsoft.SecHealthUI", 
+    "Microsoft.ScreenSketch", 
+    "Microsoft.HEIFImageExtension",
+    "Microsoft.WebpImageExtension",
+    "Microsoft.AV1VideoExtension", 
+    "Microsoft.VP9VideoExtensions", 
+    "Microsoft.MicrosoftStickyNotes",
+    "MicrosoftWindows.Client.CBS",
+    "windows.immersivecontrolpanel",
+    "Microsoft.Windows.ContentDeliveryManager",
+    "Microsoft.Windows.Search",
+    "Microsoft.Windows.ShellExperienceHost",
+    "Microsoft.Windows.StartMenuExperienceHost",
+    "MicrosoftWindows.UndockedDevKit",
+    "Microsoft.Windows.OOBENetworkCaptivePortal",
+    "Microsoft.AAD.BrokerPlugin",
+    "Microsoft.Windows.OOBENetworkConnectionFlow",
+    "Microsoft.Windows.CloudExperienceHost",
+    "Microsoft.BioEnrollment",
+    "c5e2524a-ea46-4f67-841f-6a9465d9d515",
+    "Microsoft.AccountsControl",
+    "Microsoft.AsyncTextService",
+    "Microsoft.CredDialogHost",
+    "Microsoft.ECApp",
+    "1527c705-839a-4832-9118-54d4Bd6a0c89",
+    "F46D4000-FD22-4DB4-AC8E-4E1DDDE828FE",
+    "E2A4F912-2574-4A75-9BB0-0D023378592B",
+    "Microsoft.Windows.Apprep.ChxApp",
+    "Microsoft.LockApp",
+    "Microsoft.Windows.AssignedAccessLockApp",
+    "Microsoft.Win32WebViewHost",
+    "Microsoft.Windows.CapturePicker",
+    "Microsoft.Windows.CallingShellApp",
+    "Microsoft.Windows.PeopleExperienceHost",
+    "Microsoft.Windows.PinningConfirmationDialog",
+    "NcsiUwpApp",
+    "Windows.CBSPreview",
+    "Microsoft.Windows.XGpuEjectDialog",
+    "Windows.PrintDialog"
+)
 Write-Output "Removing provisioned UWP bloatware"
 foreach ($package in (Get-AppxProvisionedPackage -Online)) {
     if ($WhitelistedUWPApps -notcontains $package.DisplayName) {
@@ -334,7 +379,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
-        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller.log" -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/wa `"$package.Name`""
+        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     }
 }
 
@@ -427,7 +472,6 @@ foreach ($packageName in $WinGetPackages) {
 Write-Output "Installing generic applications"
 $Applications = @(
     "Mozilla.Firefox.ESR",
-    "Microsoft.Office",
     "Adobe.Acrobat.Reader.64-bit",
     "7zip.7zip",
     "Zoom.Zoom",
@@ -444,6 +488,9 @@ foreach ($applicationName in $Applications) {
     winget install $applicationName --silent --accept-package-agreements --accept-source-agreements
     #Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\WinGet\$applicationName.log" -FilePath winget -ArgumentList "install $programName --silent --accept-package-agreements --accept-source-agreements"
 }
+
+Write-Output "Installing Microsoft Office"
+Start-Process -NoNewWindow -Wait -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\Office\Setup.exe" -ArgumentList "/configure $($USBDrive.DeviceId)\AutoDeploy\Applications\Office\GenericDeployment.xml"
 
 Write-Output "Installing manufacturer-specific applications"
 switch ($ComputerInfo.CsManufacturer) {
