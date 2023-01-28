@@ -284,13 +284,6 @@ New-NetFirewallRule -DisplayName "Remote Desktop" -Group "Remote Desktop" -Direc
 Write-Output "Installing NCentral Agent"
 Start-Process -NoNewWindow -Wait -FilePath "`"$($USBDrive.DeviceId)\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
 
-Write-Output "Waiting for NCentral Agent install to complete ..."
-## not the most elegant, but it works
-while (!(Get-Process -Name "BASupSrvc" -ErrorAction SilentlyContinue)) {
-    Start-Sleep -Seconds 1
-}
-Write-Output "NCentral Agent installed, continuing!"
-
 Write-Output "[3/x] Device Security"
 Write-Output "Configuring local Password Policy"
 net accounts /uniquepw:10
@@ -532,6 +525,11 @@ cleanmgr.exe /sagerun:1 /verylowdisk
 
 Write-Output "Creating Restore Point Checkpoint"
 Checkpoint-Computer -Description "AutoDeploy" -RestorePointType "MODIFY_SETTINGS"
+
+Write-Output "Waiting for NCentral Agent install to complete"
+while (!(Get-Process -Name "BASupSrvc" -ErrorAction SilentlyContinue)) {
+    Start-Sleep -Seconds 1
+}
 
 Write-Output "[DONE] Setup Complete, rebooting"
 Restart-Computer -Force -Confirm:$false
