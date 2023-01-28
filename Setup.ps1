@@ -35,13 +35,12 @@ bcdedit /edit "{current}" bootmenupolicy legacy
 Write-Output "Configuring SSD over-provisioning"
 fsutil behavior set DisableDeleteNotify 0
 
-Write-Output "Optimizing sleep behavior"
-Write-Output "Disable Sleep while on AC"
+Write-Output "Disable Hibernate/Sleep while on AC"
 powercfg /x /disk-timeout-ac 0
 powercfg /x /standby-timeout-ac 0
-powercfg /x /hiberate-timeout-ac 0
+powercfg /x /hibernate-timeout-ac 0
 
-Write-Output "Disable Modern Standby and Hiberate instead"
+Write-Output "Disable Modern Standby and Hibernate instead"
 powercfg /setdcvalueindex SCHEME_CURRENT 4f971e89-eebd-4455-a8de-9e59040e7347 7648efa3-dd9c-4e3e-b566-50f929386280 2
 powercfg /setacvalueindex SCHEME_CURRENT 4f971e89-eebd-4455-a8de-9e59040e7347 7648efa3-dd9c-4e3e-b566-50f929386280 0
 powercfg /setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
@@ -53,6 +52,7 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\P
 Write-Output "Block Windows 11 Upgrade"
 New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate"
 New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -PropertyType DWord -Name TargetReleaseVersion -Value 1 -Force
+New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -PropertyType String -Name ProductVersion -Value "Windows 10" -Force
 New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" -PropertyType String -Name TargetReleaseVersionInfo -Value "22H2" -Force
 
 Write-Output "[2/x] Remote Monitoring and Management"
@@ -121,7 +121,7 @@ $regkey = "HKLM:SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces"
 Get-ChildItem $regkey | ForEach-Object { Set-ItemProperty -Path "$regkey\$($_.pschildname)" -Name NetbiosOptions -Value 2 -Verbose}
 
 Write-Output "Securing SMB"
-Set-SmbServerConfiguration -EnableAuthenticateUserSharing $True -RequireSecuritySignature $True -EnableSecuritySignature $True -EncryptData $True -Confirm $False
+Set-SmbServerConfiguration -EnableAuthenticateUserSharing $True -RequireSecuritySignature $True -EnableSecuritySignature $True -EncryptData $True -Confirm $false
 
 Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "$($USBDrive.DeviceId)\AutoDeploy\BitLocker\" -RecoveryKeyProtector
@@ -137,7 +137,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
-        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller.log" -FilePath "$($USBDrive.DeviceId)\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/wa `"$package.Name`""
+        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller.log" -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/wa `"$package.Name`""
     }
 }
 
@@ -257,9 +257,9 @@ switch ($ComputerInfo.CsManufacturer) {
         winget install Dell.CommandUpdate --silent
 
         Write-Output "Installing Dell driver updates, please wait ..."
-        Invoke-Expression "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe /configure -silent -autoSuspendBitLocker=enable -userConsent=disable"
-        Invoke-Expression "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe -outputLog=C:\PCSetupLogs\DCUScan.log"
-        Invoke-Expression "C:\Program FIles (x86)\Dell\CommandUpdate\dcu-cli.exe /applyUpdates -reboot=disable -outputLog=C:\PCSetupLogs\DCUApply.log"
+        Invoke-Expression "`"C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe`" /configure -silent -autoSuspendBitLocker=enable -userConsent=disable"
+        Invoke-Expression "`"C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe`" -outputLog=C:\PCSetupLogs\DCUScan.log"
+        Invoke-Expression "`"C:\Program FIles (x86)\Dell\CommandUpdate\dcu-cli.exe`" /applyUpdates -reboot=disable -outputLog=C:\PCSetupLogs\DCUApply.log"
     }
 }
 
@@ -270,6 +270,11 @@ Enable-WindowsOptionalFeature -Online -FeatureName NetFx3 -All
 Write-Output "[6/6] Cleanup"
 Write-Output "Removing Setup.ps1"
 Remove-Item C:\AutoDeploy\Setup.ps1 -Force
+Write-Output "Removing AutoLogin"
+Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoAdminLogin -Force
+Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultDomainName
+Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultUserName -Force
+Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultPassword -Force
 
 Write-Output "Performing Disk Cleanup"
 cleanmgr.exe /sagerun:1 /verylowdisk
