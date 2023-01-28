@@ -245,6 +245,12 @@ If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU")) {
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoRebootWithLoggedOnUsers" -Type DWord -Value 1
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUPowerManagement" -Type DWord -Value 0
 
+Write-Output "Installing Module PSWindowsUpdate"
+Install-Module PSWindowsUpdate -Force -Confirm:$false
+
+Write-Output "Installing Windows Updates"
+Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot
+
 Write-Output "[2/x] Remote Monitoring and Management"
 Write-Output "Requiring Local Device Administrator to change password on next login"
 net user simpatico /logonpasswordchg:yes
@@ -504,7 +510,7 @@ switch ($ComputerInfo.CsManufacturer) {
 
 Write-Output "Installing Windows Features"
 Add-WindowsCapability -Online -Name "Print.Management.Console~~~~0.0.1.0"
-Enable-WindowsOptionalFeature -Online -FeatureName NetFx3 -All
+Enable-WindowsOptionalFeature -Online -FeatureName NetFx3 -All -NoRestart -WarningAction SilentlyContinue
 
 Write-Output "[6/6] Cleanup"
 Write-Output "Removing AutoDeploy dependencies"
