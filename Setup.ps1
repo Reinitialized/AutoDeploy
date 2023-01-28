@@ -30,7 +30,7 @@ New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Syste
 Enable-ComputerRestore -Drive "$env:SystemDrive"
 
 Write-Output "Setting boot menu to legacy"
-bcdedit /edit "{current}" bootmenupolicy legacy
+bcdedit /set "{current}" bootmenupolicy legacy
 
 Write-Output "Configuring SSD over-provisioning"
 fsutil behavior set DisableDeleteNotify 0
@@ -129,7 +129,8 @@ If (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo")) {
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" -Name "DisabledByGroupPolicy" -Type DWord -Value 1
 
 Write-Output "Restrict Delivery Optimization to LAN only"
-If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config")) {
+If (!(Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization")) {
+    New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization" | Out-Null
     New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" | Out-Null
 }
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" -Name "DODownloadMode" -Type DWord -Value 1
@@ -141,8 +142,11 @@ If (!(Test-Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanc
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" -Name "PeopleBand" -Type DWord -Value 0
 
 Write-Output "Disable `"News and Interest`""
-Set-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" -Name "EnableFeeds" -Type DWord -Value 0
-Set-ItemProperty -Path  "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds" -Name "ShellFeedsTaskbarViewMode" -Type DWord -Value 2
+If (!(Test-Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds")) {
+    New-Item -Path "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds" | Out-Null
+}
+Set-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\Windows\Windows Feeds" -Name "EnableFeeds" -Type DWord -Value 0
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds" -Name "ShellFeedsTaskbarViewMode" -Type DWord -Value 2
 
 Write-Output "Hide `"Meet Now`" from Taskbar"
 If (!(Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer")) {
@@ -313,7 +317,7 @@ $regkey = "HKLM:SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces"
 Get-ChildItem $regkey | ForEach-Object { Set-ItemProperty -Path "$regkey\$($_.pschildname)" -Name NetbiosOptions -Value 2 -Verbose}
 
 Write-Output "Securing SMB"
-Set-SmbServerConfiguration -EnableAuthenticateUserSharing $True -RequireSecuritySignature $True -EnableSecuritySignature $True -EncryptData $True -Confirm $false
+Set-SmbServerConfiguration -EnableAuthenticateUserSharing $True -RequireSecuritySignature $True -EnableSecuritySignature $True -EncryptData $True
 
 Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "$($USBDrive.DeviceId)\AutoDeploy\BitLocker\" -RecoveryKeyProtector
@@ -437,7 +441,7 @@ $Applications = @(
 foreach ($applicationName in $Applications) {
     Write-Output "Installing $applicationName"
     winget install $applicationName --silent --accept-package-agreements --accept-source-agreements
-    #Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\WinGet\$applicationName.log" -FilePath winget -ArgumentsList "install $programName --silent --accept-package-agreements --accept-source-agreements"
+    #Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\WinGet\$applicationName.log" -FilePath winget -ArgumentList "install $programName --silent --accept-package-agreements --accept-source-agreements"
 }
 
 Write-Output "Installing manufacturer-specific applications"
@@ -449,9 +453,9 @@ switch ($ComputerInfo.CsManufacturer) {
         winget install Dell.CommandUpdate --silent
 
         Write-Output "Installing Dell driver updates, please wait ..."
-        Invoke-Expression "`"C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe`" /configure -silent -autoSuspendBitLocker=enable -userConsent=disable"
-        Invoke-Expression "`"C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe`" -outputLog=C:\PCSetupLogs\DCUScan.log"
-        Invoke-Expression "`"C:\Program FIles (x86)\Dell\CommandUpdate\dcu-cli.exe`" /applyUpdates -reboot=disable -outputLog=C:\PCSetupLogs\DCUApply.log"
+        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "/configure -silent -autoSuspendBitLocker=enable -userContent=disable"
+        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "-outputLog=C:\AutoDeploy\Logs\DCUScan.log"
+        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "/applyUpdates -reboot=disable -outputLog=C:\AutoDeploy\Logs\DCUApply.log"
     }
 }
 
