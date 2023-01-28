@@ -372,7 +372,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
-        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
+        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     }
 }
 
