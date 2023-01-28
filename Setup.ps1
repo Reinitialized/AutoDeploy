@@ -85,7 +85,7 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" 
 New-NetFirewallRule -DisplayName "Remote Desktop" -Group "Remote Desktop" -Direction Inbound -Protocol TCP -LocalPort 3389 -Action Allow -Enabled True
 
 Write-Output "Installing NCentral Agent"
-Start-Process -NoNewWindow -Wait -FilePath "`"$(USBDrive.DeviceId)\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
+Start-Process -NoNewWindow -Wait -FilePath "`"$($USBDrive.DeviceId)\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
 
 Write-Output "Waiting for NCentral Agent install to complete ..."
 ## not the most elegant, but it works
@@ -137,7 +137,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
-        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller.log" -FilePath "$(USBDrive.DeviceId)\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/wa `"$package.Name`""
+        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller.log" -FilePath "$($USBDrive.DeviceId)\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/wa `"$package.Name`""
     }
 }
 
