@@ -314,7 +314,7 @@ $SMBParameters = @{
 Set-SmbServerConfiguration @SMBParameters
 
 Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
-New-Item -Path C:\AutoDeploy -ItemType Directory -Name Recovery -Force
+New-Item -Path C:\AutoDeploy -ItemType Directory -Name BitLocker -Force
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "C:\AutoDeploy\BitLocker\" -RecoveryKeyProtector
 
 Write-Output "[4/x] Bloatware"
