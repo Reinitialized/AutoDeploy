@@ -314,6 +314,7 @@ $SMBParameters = @{
 Set-SmbServerConfiguration @SMBParameters
 
 Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
+New-Item -Path C:\AutoDeploy -ItemType Directory -Name Recovery -Force
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "C:\AutoDeploy\BitLocker\" -RecoveryKeyProtector
 
 Write-Output "[4/x] Bloatware"
@@ -372,6 +373,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
+        Remove-AppxPackage -Package package.Name -ErrorAction SilentlyContinue
         Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     }
 }
