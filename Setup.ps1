@@ -2,13 +2,6 @@ Start-Transcript -Append "C:\AutoDeploy\Logs\Setup.log"
 Write-Output "AutoDeploy started. Waiting 60 seconds to let Windows settle"
 Start-Sleep -Seconds 60
 
-Write-Output "Checking for AutoDeploy USB drive"
-$USBDrive = Get-WmiObject Win32_LogicalDisk -Filter "DriveType = 2" | Where-Object { $_.VolumeName -eq "AutoDeployUSB" }
-if (-Not $USBDrive) {
-    Write-Error "Cannot continue: Unable to locate AutoDeploy USB, a required dependency. Please try again."
-    Throw "Terminating"
-}
-
 Write-Output "Checking for Internet access"
 if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)) {
     Write-Output "Internet access not available, checking for Ethernet drivers"
@@ -282,7 +275,7 @@ New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" 
 New-NetFirewallRule -DisplayName "Remote Desktop" -Group "Remote Desktop" -Direction Inbound -Protocol TCP -LocalPort 3389 -Action Allow -Enabled True
 
 Write-Output "Installing NCentral Agent"
-Start-Process -NoNewWindow -Wait -FilePath "`"$($USBDrive.DeviceId)\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
+Start-Process -NoNewWindow -Wait -FilePath "`"C:\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
 
 Write-Output "[3/x] Device Security"
 Write-Output "Configuring local Password Policy"
@@ -321,7 +314,7 @@ $SMBParameters = @{
 Set-SmbServerConfiguration @SMBParameters
 
 Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
-Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "$($USBDrive.DeviceId)\AutoDeploy\BitLocker\" -RecoveryKeyProtector
+Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "C:\AutoDeploy\BitLocker\" -RecoveryKeyProtector
 
 Write-Output "[4/x] Bloatware"
 $WhitelistedUWPApps = @(
@@ -379,7 +372,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
-        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
+        Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     }
 }
 
@@ -458,15 +451,15 @@ $BlacklistedWin32 = @(
 
 foreach ($programData in $BlacklistedWin32) {
     Write-Output "Removing $($programData.Name)"
-    Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($programData.Name)_32bit.log" -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"C:\Program Files (x86)\$($programData.Path)`" /mode Advanced /32"
-    Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($programData.Name)_64bit.log" -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"C:\Program Files\$($programData.Path)`" /mode Advanced /64"
+    Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($programData.Name)_32bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"C:\Program Files (x86)\$($programData.Path)`" /mode Advanced /32"
+    Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($programData.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($programData.Name)`" /path `"C:\Program Files\$($programData.Path)`" /mode Advanced /64"
 }
 
 Write-Output "[5/x] Install Applications and Features"
 Write-Output "Installing winget"
 $WinGetPackages = @("Microsoft.UI.Xaml.2.7_7.2208.15002.0_x64__8wekyb3d8bbwe.Appx","Microsoft.VCLibs.140.00.UWPDesktop_14.0.30704.0_x64__8wekyb3d8bbwe.Appx","Microsoft.VCLibs.140.00_14.0.30704.0_x64__8wekyb3d8bbwe.Appx","Microsoft.DesktopAppInstaller_2022.927.3.0_neutral_~_8wekyb3d8bbwe.Msixbundle")
 foreach ($packageName in $WinGetPackages) {
-    Add-AppxPackage -Path "$($USBDrive.DeviceId)\AutoDeploy\Applications\WinGet\$packageName"
+    Add-AppxPackage -Path "C:\AutoDeploy\Applications\WinGet\$packageName"
 }
 
 Write-Output "Installing generic applications"
@@ -490,7 +483,7 @@ foreach ($applicationName in $Applications) {
 }
 
 Write-Output "Installing Microsoft Office"
-Start-Process -NoNewWindow -Wait -FilePath "$($USBDrive.DeviceId)\AutoDeploy\Applications\Office\Setup.exe" -ArgumentList "/configure $($USBDrive.DeviceId)\AutoDeploy\Applications\Office\GenericDeployment.xml"
+Start-Process -NoNewWindow -Wait -FilePath "C:\AutoDeploy\Applications\Office\Setup.exe" -ArgumentList "/configure C:\AutoDeploy\Applications\Office\GenericDeployment.xml"
 
 Write-Output "Installing manufacturer-specific applications"
 switch ($ComputerInfo.CsManufacturer) {
@@ -512,8 +505,10 @@ Add-WindowsCapability -Online -Name "Print.Management.Console~~~~0.0.1.0"
 Enable-WindowsOptionalFeature -Online -FeatureName NetFx3 -All
 
 Write-Output "[6/6] Cleanup"
-Write-Output "Removing Setup.ps1"
+Write-Output "Removing AutoDeploy dependencies"
 Remove-Item C:\AutoDeploy\Setup.ps1 -Force
+Remove-Item C:\AutoDeploy\Applications -Recurse -Force
+
 Write-Output "Removing AutoLogin"
 Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoAdminLogin -Force
 Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultDomainName
