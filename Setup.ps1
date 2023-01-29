@@ -246,6 +246,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "AUPowerManagement" -Type DWord -Value 0
 
 Write-Output "Installing Module PSWindowsUpdate"
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 Install-Module PSWindowsUpdate -Force -Confirm:$false
 
 Write-Output "Installing Windows Updates"
@@ -379,7 +380,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
 Write-Output "Removing installed UWP bloatware"
 foreach ($package in Get-AppxPackage) {
     if ($WhitelistedUWPApps -notcontains $package.Name) {
-        Remove-AppxPackage -Package package.Name -ErrorAction SilentlyContinue
+        Remove-AppxPackage -Package $package.Name -ErrorAction SilentlyContinue
         Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     }
 }
@@ -487,8 +488,10 @@ $Applications = @(
 foreach ($applicationName in $Applications) {
     Write-Output "Installing $applicationName"
     winget install $applicationName --silent --accept-package-agreements --accept-source-agreements
-    #Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\WinGet\$applicationName.log" -FilePath winget -ArgumentList "install $programName --silent --accept-package-agreements --accept-source-agreements"
 }
+
+Write-Output "Upgrade all installed applications"
+winget upgrade --all
 
 Write-Output "Installing Microsoft Office"
 Start-Process -NoNewWindow -Wait -FilePath "C:\AutoDeploy\Applications\Office\Setup.exe" -ArgumentList "/configure C:\AutoDeploy\Applications\Office\GenericDeployment.xml"
@@ -519,7 +522,7 @@ Remove-Item C:\AutoDeploy\Applications -Recurse -Force
 
 Write-Output "Removing AutoLogin"
 Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoAdminLogin -Force
-Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultDomainName
+Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultDomainName -Force
 Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultUserName -Force
 Remove-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultPassword -Force
 
