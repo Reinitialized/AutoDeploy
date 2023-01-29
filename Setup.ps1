@@ -505,8 +505,8 @@ switch ($ComputerInfo.CsManufacturer) {
         winget install Dell.CommandUpdate --silent
 
         Write-Output "Installing Dell driver updates, please wait ..."
-        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "/configure -silent -autoSuspendBitLocker=enable -userContent=disable"
-        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "-outputLog=C:\AutoDeploy\Logs\DCUScan.log"
+        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "/configure -silent -autoSuspendBitLocker=enable -userConsent=disable"
+        Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "/scan -outputLog=C:\AutoDeploy\Logs\DCUScan.log"
         Start-Process -NoNewWindow -Wait -FilePath "C:\Program Files (x86)\Dell\CommandUpdate\dcu-cli.exe" -ArgumentList "/applyUpdates -reboot=disable -outputLog=C:\AutoDeploy\Logs\DCUApply.log"
     }
 }
