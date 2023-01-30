@@ -10,10 +10,16 @@ New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlo
 New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -PropertyType String -Name DefaultUserName -Value "simpatico" -Force
 New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -PropertyType String -Name DefaultPassword -Value "2Rbsx931nKXKye2D" -Force
 
+Write-Output "Disable OOBE Privacy Settings prompt"
+New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE"
+New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE" -PropertyType DWORD -Name DisablePrivacyExperience -Value 1 -Force
+
 $USBDrive = Get-WmiObject Win32_LogicalDisk -Filter "DriveType = 2" | Where-Object { $_.VolumeName -eq "AutoDeployUSB" }
 if (-Not $USBDrive) {
     Throw "Cannot continue: Unable to locate AutoDeploy USB, a required dependency. Please try again."
 }
+
+Copy-Item -Path "$($USBDrive.DeviceId)\AutoDeploy\Applications" -Destination "C:\AutoDeploy\Applications" -Recurse -Confirm:$false
 
 Write-Output "Checking for Internet access"
 if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)) {
@@ -39,17 +45,11 @@ if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)
     }
 }
 
-Copy-Item -Path "$($USBDrive.DeviceId)\AutoDeploy\Applications" -Destination "C:\AutoDeploy\Applications" -Recurse -Confirm:$false
-
 Write-Output "Downloading Setup.ps1"
 Invoke-WebRequest "https://raw.githubusercontent.com/Reinitialized/AutoDeploy/indev/Setup.ps1" -OutFile C:\AutoDeploy\Setup.ps1
 
 Write-Output "Setting AutoDeploy to run on first login"
 New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\RunOnce" -PropertyType String -Name "AutoDeploy" -Value "PowerShell -ExecutionPolicy Bypass -File C:\AutoDeploy\Setup.ps1" -Force
-
-Write-Output "Disable OOBE Privacy Settings prompt"
-New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE"
-New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE" -PropertyType DWORD -Name DisablePrivacyExperience -Value 1 -Force
 
 Write-Output "AutoDeploy install complete"
 Stop-Transcript
