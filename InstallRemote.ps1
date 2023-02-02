@@ -27,4 +27,4 @@ Set-LocalUser -Member $LocalAccount -FullName "Simpatico Systems, LLC" -Descript
 Set-LocalUser -Member $LocalAccount -AccountNeverExpires -PasswordNeverExpires:$false
 
 Write-Output "Starting Setup.ps1"
-Start-Process -FilePath PowerShell -ArgumentList "-ExecutionPolicy Byypass -File C:\AutoDeploy\Setup.ps1" 
+Start-Process -FilePath PowerShell -ArgumentList "-ExecutionPolicy Bypass -File C:\AutoDeploy\Setup.ps1" 
