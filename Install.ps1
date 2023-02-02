@@ -2,7 +2,7 @@ Start-Transcript -Append "C:\AutoDeploy\Logs\Install.log"
 
 Write-Output "Configuring Local Device Administrator"
 $LocalUser = New-LocalUser -Name "simpatico" -FullName "Simpatico Systems, LLC" -Description "Local Device Administrator" -Password (ConvertTo-SecureString -String "2Rbsx931nKXKye2D" -AsPlainText -Force)
-Set-LocalUser -Name "simpatico" -AccountNeverExpires -PasswordNeverExpires
+Set-LocalUser -Name "simpatico" -AccountNeverExpires -PasswordNeverExpires:$false
 Add-LocalGroupMember -Group (Get-LocalGroup -Name "Administrators") -Member $LocalUser
 
 New-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" -PropertyType String -Name AutoAdminLogin -Value 1 -Force
