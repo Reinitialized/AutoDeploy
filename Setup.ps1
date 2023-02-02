@@ -281,8 +281,16 @@ Write-Output "Enabling Remote Desktop"
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server" -PropertyType DWord -Name fDenyTSConnections -Value 0 -Force
 New-NetFirewallRule -DisplayName "Remote Desktop" -Group "Remote Desktop" -Direction Inbound -Protocol TCP -LocalPort 3389 -Action Allow -Enabled True
 
-Write-Output "Installing NCentral Agent"
-Start-Process -NoNewWindow -Wait -FilePath "`"C:\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
+Write-Output "Checking if NCentral Agent is installed"
+switch (($InstalledApps | Where-Object {$_.Vendor -eq "N-Able Technologies"} | Measure-Object).Count -gt 0) {
+    $true   {
+        Write-Output "NCentral Agent already installed, moving on"
+    }
+    $false  {
+        Write-Output "Installing NCentral Agent"
+        Start-Process -NoNewWindow -Wait -FilePath "`"C:\AutoDeploy\Applications\NCentralAgent.exe`"" -ArgumentList "/quiet"
+    }
+}
 
 Write-Output "[3/x] Device Security"
 Write-Output "Configuring local Password Policy"
