@@ -397,11 +397,11 @@ foreach ($package in (Get-AppxPackage)) {
     }
 
     if ($shouldRemove) {
-        Write-Output "Removing ProvisionedPackage $($ackage.DisplayName)"
+        Write-Output "Removing ProvisionedPackage $($ackage.Name)"
         Remove-AppxPackage -Package $package.Name -ErrorAction SilentlyContinue
         Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     } else {
-        Write-Output "ProvisionedPackage $($package.DisplayName) is blacklisted, ignoring"
+        Write-Output "ProvisionedPackage $($package.Name) is blacklisted, ignoring"
     }
 }
 
