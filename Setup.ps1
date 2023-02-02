@@ -325,63 +325,75 @@ New-Item -Path C:\AutoDeploy -ItemType Directory -Name BitLocker -Force
 Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "C:\AutoDeploy\BitLocker\" -RecoveryKeyProtector
 
 Write-Output "[4/x] Bloatware"
-$WhitelistedUWPApps = @(
-    "MicrosoftWindows.Client.WebExperience", 
+$BlacklistedUWPApps = @(
+    "windows.immersivecontrolpanel",
+    "*MicrosoftWindows.Client.*",
+    "MicrosoftWindows.UndockedDevKit",
+    "Windows.CBSPreview",
+    "Windows.PrintDialog",
+    "*Microsoft.Windows.*",
     "Microsoft.WindowsStore",
     "Microsoft.StorePurchaseApp",
     "Microsoft.WindowsNotepad", 
     "Microsoft.WindowsCalculator", 
     "Microsoft.SecHealthUI", 
+    "*Microsoft.UI.*",
+    "*Microsoft.NET.*",
     "Microsoft.ScreenSketch", 
     "Microsoft.HEIFImageExtension",
     "Microsoft.WebpImageExtension",
     "Microsoft.AV1VideoExtension", 
     "Microsoft.VP9VideoExtensions", 
     "Microsoft.MicrosoftStickyNotes",
-    "MicrosoftWindows.Client.CBS",
-    "windows.immersivecontrolpanel",
-    "Microsoft.Windows.ContentDeliveryManager",
-    "Microsoft.Windows.Search",
-    "Microsoft.Windows.ShellExperienceHost",
-    "Microsoft.Windows.StartMenuExperienceHost",
-    "MicrosoftWindows.UndockedDevKit",
-    "Microsoft.Windows.OOBENetworkCaptivePortal",
     "Microsoft.AAD.BrokerPlugin",
-    "Microsoft.Windows.OOBENetworkConnectionFlow",
-    "Microsoft.Windows.CloudExperienceHost",
     "Microsoft.BioEnrollment",
-    "c5e2524a-ea46-4f67-841f-6a9465d9d515",
     "Microsoft.AccountsControl",
     "Microsoft.AsyncTextService",
     "Microsoft.CredDialogHost",
     "Microsoft.ECApp",
+    "Microsoft.LockApp",
+    "Microsoft.Win32WebViewHost",
     "1527c705-839a-4832-9118-54d4Bd6a0c89",
     "F46D4000-FD22-4DB4-AC8E-4E1DDDE828FE",
     "E2A4F912-2574-4A75-9BB0-0D023378592B",
-    "Microsoft.Windows.Apprep.ChxApp",
-    "Microsoft.LockApp",
-    "Microsoft.Windows.AssignedAccessLockApp",
-    "Microsoft.Win32WebViewHost",
-    "Microsoft.Windows.CapturePicker",
-    "Microsoft.Windows.CallingShellApp",
-    "Microsoft.Windows.PeopleExperienceHost",
-    "Microsoft.Windows.PinningConfirmationDialog",
-    "NcsiUwpApp",
-    "Windows.CBSPreview",
-    "Microsoft.Windows.XGpuEjectDialog",
-    "Windows.PrintDialog"
+    "c5e2524a-ea46-4f67-841f-6a9465d9d515",
+    "NcsiUwpApp"
 )
 Write-Output "Removing provisioned UWP bloatware"
 foreach ($package in (Get-AppxProvisionedPackage -Online)) {
-    if ($WhitelistedUWPApps -notcontains $package.DisplayName) {
+    $shouldRemove = $true
+    foreach ($packageName in $BlacklistedUWPApps) {
+        if ($package.DisplayName -like $packageName) {
+            $shouldRemove = $false
+            break
+        }
+    }
+
+    if ($shouldRemove) {
+        Write-Output "Removing ProvisionedPackage $($ackage.DisplayName)"
         Remove-AppxProvisionedPackage -Online -PackageName $package.PackageName -ErrorAction SilentlyContinue
+    } else {
+        Write-Output "ProvisionedPackage $($package.DisplayName) is blacklisted, ignoring"
     }
 }
+
 Write-Output "Removing installed UWP bloatware"
-foreach ($package in Get-AppxPackage) {
-    if ($WhitelistedUWPApps -notcontains $package.Name) {
+Write-Output "Removing provisioned UWP bloatware"
+foreach ($package in (Get-AppxPackage)) {
+    $shouldRemove = $true
+    foreach ($packageName in $BlacklistedUWPApps) {
+        if ($package.Name -like $packageName) {
+            $shouldRemove = $false
+            break
+        }
+    }
+
+    if ($shouldRemove) {
+        Write-Output "Removing ProvisionedPackage $($ackage.DisplayName)"
         Remove-AppxPackage -Package $package.Name -ErrorAction SilentlyContinue
         Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
+    } else {
+        Write-Output "ProvisionedPackage $($package.DisplayName) is blacklisted, ignoring"
     }
 }
 
