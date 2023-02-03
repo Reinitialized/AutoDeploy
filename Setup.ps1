@@ -347,19 +347,14 @@ $BlacklistedUWPApps = @(
     "Microsoft.ECApp",
     "Microsoft.LockApp",
     "Microsoft.Win32WebViewHost",
-    "Microsoft.Windows.CapturePicker",
-    "Microsoft.Windows.OOBENetworkCaptivePort",
-    "Microsoft.Windows.OOBENetworkConnectionFlow",
-    "Microsoft.Windows.PinningConfirmationDialog",
-    "Microsoft.Windows.SecHealthUI",
-    "Microsoft.Windows.ShellExperienceHost",
     "Windows.CBSPreview",
     "Windows.PrintDialog",
     "Windows.immersivecontrolpanel",
-    "*MicrosoftWindows.Client.*",
-    "*Microsoft.UI.*",
-    "*Microsoft.NET.*",
-    "*Microsoft.VCLibs.*"
+    "Microsoft.Windows.*"
+    "Microsoft.UI.*",
+    "Microsoft.NET.*",
+    "Microsoft.VCLibs.*",
+    "MicrosoftWindows.Client.*"
 )
 Write-Output "Removing provisioned UWP bloatware"
 foreach ($package in (Get-AppxProvisionedPackage -Online)) {
