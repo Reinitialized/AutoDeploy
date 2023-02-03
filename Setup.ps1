@@ -347,6 +347,7 @@ $BlacklistedUWPApps = @(
     "Microsoft.SecHealthUI", 
     "*Microsoft.UI.*",
     "*Microsoft.NET.*",
+    "*Microsoft.VCLibs.*",
     "Microsoft.ScreenSketch", 
     "Microsoft.HEIFImageExtension",
     "Microsoft.WebpImageExtension",
@@ -378,7 +379,7 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
     }
 
     if ($shouldRemove) {
-        Write-Output "Removing ProvisionedPackage $($ackage.DisplayName)"
+        Write-Output "Removing ProvisionedPackage $($package.DisplayName)"
         Remove-AppxProvisionedPackage -Online -PackageName $package.PackageName -ErrorAction SilentlyContinue
     } else {
         Write-Output "ProvisionedPackage $($package.DisplayName) is blacklisted, ignoring"
@@ -397,11 +398,11 @@ foreach ($package in (Get-AppxPackage)) {
     }
 
     if ($shouldRemove) {
-        Write-Output "Removing ProvisionedPackage $($ackage.Name)"
+        Write-Output "Removing package $($package.Name)"
         Remove-AppxPackage -Package $package.Name -ErrorAction SilentlyContinue
         Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     } else {
-        Write-Output "ProvisionedPackage $($package.Name) is blacklisted, ignoring"
+        Write-Output "Package $($package.Name) is blacklisted, ignoring"
     }
 }
 
