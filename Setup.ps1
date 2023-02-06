@@ -328,9 +328,15 @@ $SMBParameters = @{
 }
 Set-SmbServerConfiguration @SMBParameters
 
-Write-Output "Enabling Bitlocker and saving to AutoDeploy USB"
-New-Item -Path C:\AutoDeploy -ItemType Directory -Name BitLocker -Force
-Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "C:\AutoDeploy\BitLocker\" -RecoveryKeyProtector
+Write-Output "Checking if Workstation has TPM"
+$TPMState = Get-Tpm
+if ($TPMState.TpmPresent -And $TPMState.TpmReady) {
+    Write-Output "Workstation TPM Enabled, enabling Bitlocker"
+    New-Item -Path C:\AutoDeploy -ItemType Directory -Name BitLocker -Force
+    Get-BitLockerVolume | Enable-BitLocker -EncryptionMethod Aes256 -RecoveryKeyPath "C:\AutoDeploy\Recovery\" -RecoveryKeyProtector
+} else {
+    Write-Output "No TPM detected, skipping Bitlocker"
+}
 
 Write-Output "[4/x] Bloatware"
 $BlacklistedUWPApps = @(
