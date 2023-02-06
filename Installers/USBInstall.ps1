@@ -29,7 +29,7 @@ if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)
 	}
     
     Write-Output "Attempting to install drivers"
-    Start-Process -NoNewWindow -Wait "C:\AutoDeploy\Applications\SnappyDriver\SDIO.exe" -ArgumentList "/script:C:\AutoDeploy\Applications\SnappyDriver\autoinstall.txt"
+    Start-Process -NoNewWindow -Wait "C:\AutoDeploy\Applications\SnappyDriver\SDIO.exe" -ArgumentList "-script:C:\AutoDeploy\Applications\SnappyDriver\autoinstall.txt"
 
     Write-Output "Sleeping for 15 seconds to let drivers settle"
     Start-Sleep 15
