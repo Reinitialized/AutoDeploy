@@ -334,12 +334,13 @@ Enable-BitLocker -MountPoint "C:" -EncryptionMethod Aes256 -RecoveryKeyPath "C:\
 
 Write-Output "[4/x] Bloatware"
 $BlacklistedUWPApps = @(
+    # System Components
     "1527c705-839a-4832-9118-54d4Bd6a0c89",
     "c5e2524a-ea46-4f67-841f-6a9465d9d515",
     "E2A4F912-2574-4A75-9BB0-0D023378592B",
     "F46D4000-FD22-4DB4-AC8E-4E1DDDE828FE",
     "InputApp",
-    "Microsoft.AAD.Broker.Plugin",
+    "Microsoft.AAD.BrokerPlugin",
     "Microsoft.AccountsControl",
     "Microsoft.AsyncTextService",
     "Microsoft.BioEnrollment",
@@ -347,14 +348,31 @@ $BlacklistedUWPApps = @(
     "Microsoft.ECApp",
     "Microsoft.LockApp",
     "Microsoft.Win32WebViewHost",
+    "Microsoft.Windows.Search",
+    "Microsoft.Windows.ShellHostExperience",
+    "Microsoft.Windows.StartMenuExperienceHost",
+    "Microsoft.Windows.OOBENetworkCaptivePortal",
+    "Microsoft.Windows.OOBENetworkConnectionFlow",
+    "Microsoft.BioEnrollment",
     "Windows.CBSPreview",
     "Windows.PrintDialog",
     "Windows.immersivecontrolpanel",
-    "Microsoft.Windows.*"
+    "MicrosoftWindows.Client.*"
+    # Dependencies
     "Microsoft.UI.*",
     "Microsoft.NET.*",
     "Microsoft.VCLibs.*",
-    "MicrosoftWindows.Client.*"
+    # Basic functionality
+    "Microsoft.HEIFImageExtension",
+    "Microsoft.MicrosoftStickyNotes",
+    "Microsoft.ScreenSketch",
+    "Microsoft.VP9VideoExtensions",
+    "Microsoft.WebMediaExtensions",
+    "Microsoft.WebpImageExtensions",
+    "Microsoft.Windows.Photos",
+    "Microsoft.WindowsCalculator",
+    "Microsoft.WindowsStore",
+    "Microsoft.StorePurchaseApp"
 )
 Write-Output "Removing provisioned UWP bloatware"
 foreach ($package in (Get-AppxProvisionedPackage -Online)) {
@@ -370,12 +388,11 @@ foreach ($package in (Get-AppxProvisionedPackage -Online)) {
         Write-Output "Removing ProvisionedPackage $($package.DisplayName)"
         Remove-AppxProvisionedPackage -Online -PackageName $package.PackageName -ErrorAction SilentlyContinue
     } else {
-        Write-Output "ProvisionedPackage $($package.DisplayName) is blacklisted, ignoring"
+        Write-Output "Ignoring blacklisted ProvisionedPackage $($package.DisplayName)"
     }
 }
 
 Write-Output "Removing installed UWP bloatware"
-Write-Output "Removing provisioned UWP bloatware"
 foreach ($package in (Get-AppxPackage)) {
     $shouldRemove = $true
     foreach ($packageName in $BlacklistedUWPApps) {
@@ -390,7 +407,7 @@ foreach ($package in (Get-AppxPackage)) {
         Remove-AppxPackage -Package $package.Name -ErrorAction SilentlyContinue
         Start-Process -NoNewWindow -Wait -RedirectStandardOutput "C:\AutoDeploy\Logs\RevoUninstaller\$($package.Name)_64bit.log" -FilePath "C:\AutoDeploy\Applications\RevoUninstaller\x64\RevoUnPro.exe" -ArgumentList "/mu `"$($package.Name)`" /path `"$($package.InstallLocation)`" /mode Advanced /64"
     } else {
-        Write-Output "Package $($package.Name) is blacklisted, ignoring"
+        Write-Output "Ignoring blacklisted package $($package.Name)"
     }
 }
 
