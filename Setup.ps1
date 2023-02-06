@@ -355,7 +355,7 @@ $BlacklistedUWPApps = @(
     "Microsoft.LockApp",
     "Microsoft.Win32WebViewHost",
     "Microsoft.Windows.Search",
-    "Microsoft.Windows.ShellHostExperience",
+    "Microsoft.Windows.ShellExperienceHost",
     "Microsoft.Windows.StartMenuExperienceHost",
     "Microsoft.Windows.OOBENetworkCaptivePortal",
     "Microsoft.Windows.OOBENetworkConnectionFlow",
