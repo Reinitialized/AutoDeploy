@@ -27,12 +27,13 @@ if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)
     if ((Get-NetAdapter | Where-Object {$_.DriverDescription -match "Ethernet"})) {
 		Throw "Cannot continue: Ethernet drivers were detected, but could not access the Internet.`nPlease perform the following checks and try again:`n- Verify an Ethernet cable is connected to the computer`n- Verify the LAN is functional"
 	}
-    
+    Write-Output "Pausing for 30 seconds to let things settle"
+    Start-Sleep -Seconds 30
     Write-Output "Attempting to install drivers"
     Start-Process -NoNewWindow -Wait "C:\AutoDeploy\Applications\SnappyDriver\SDIO.exe" -ArgumentList "-script:C:\AutoDeploy\Applications\SnappyDriver\autoinstall.txt"
 
     Write-Output "Sleeping for 15 seconds to let drivers settle"
-    Start-Sleep 15
+    Start-Sleep -Seconds 15
 
     Write-Output "Checking for Internet access again"
     if (-Not (Test-Connection 1.1.1.1 -Quiet -Count 1 -ErrorAction SilentlyContinue)) {
